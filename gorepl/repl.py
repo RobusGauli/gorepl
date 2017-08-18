@@ -89,7 +89,12 @@ def execute_go(import_node, statement_node):
   _file = open('test.go', mode='w+')
   _file.write(''.join(line for line in _go_cover))
   _file.flush()
-  subprocess.call('go run test.go'.split())
+
+  
+  s = subprocess.Popen('go run test.go'.split(), stdout = sys.stdin, stderr=sys.stdin)
+  
+  
+
 
 
 

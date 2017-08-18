@@ -1,11 +1,12 @@
 package main
 import (
 "fmt"
-"math"
+asd
 )
 func main() {
-fmt.Println("asd")
-fmt.Println("there is me and that i love you")
-fmt.Println(math.pi)
-fmt.Println("there");
+fmt.Println("thiasd")
+fmt.Println("i have my own thinfs to say")
+a := 34
+a
+fmt.Println(a)
 }
