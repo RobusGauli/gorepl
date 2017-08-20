@@ -50,14 +50,47 @@ class Repl:
         self._state.statement_node = None
         #a stack to keep track of all the single line that is input by the user
         self.code_stack = collections.deque()
+        self._file_name = 'test.go'
+
+        #a current_running statem, which has a unknown return code, 
+        self._current_state = rdict()
+        self._current_state.import_node = ImportNode()
+        self._current_state.main_statement_node = MainStatementNode()
+        self._current_state.statement_node = None
+    
     
     def generate_code(self):
-        _code = (
+        return (
             'package main\n'
-            %s
-            'function main() {'
-            %s
+            '%s\n'
+            'func main() {'
+            '%s\n'
+            '%s\n'
             '}'
-        ) % (self._state.import_node.code(), self._state.main_statement_node.code())
+        ) % ('\n'.join(self._state.import_node.imports.union(self._current_state.import_node.imports)),
+             self._state.main_statement_node.code(),
+             self._current_state.main_statement_node.code()
+             )
+
     
-        
+    def write_to_file(self):
+        _file = open(self._file_name, mode='w+')
+        _file.write(self.generate_code())
+        _file.close()
+    
+    def _merge_state(self):
+        '''when the return code is 0'''
+
+        self._state.import_node.imports.update(self._current_state.import_node.imports)
+        self._state.main_statement_node.main_statements.extend(self._current_state.main_statement_node.main_statements)
+    
+    def run(self):
+        #runt the code for the given file
+        return_code = subprocess.call('go run test.go'.split(), stdout=sys.stdin, stderr=sys.stderr)
+        if return_code == 0:
+            #that means we can union the both  state and _current_state
+            self._merge_state()
+        else:
+            print('return code ', return_code, 'bad')
+            self._current_state.import_node.imports.clear()
+            self._current_state.main_statement_node.main_statements.clear()
