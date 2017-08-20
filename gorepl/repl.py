@@ -41,22 +41,33 @@ class ImportNode:
   _skeleton = 'import (\n%s\n)'
 
   def __init__(self):
-    self.packages = set()
+    self.evaluating_packages = set()
+    self.correct_packages = set()
   
   def add_package(self, line):
     '''we assume that the string that it has have a "import somepackage"'''
     if not len(line.split()) == 2:
       raise ValueError('Bad import statement.')
      
-    self.packages.add(line.split()[1].strip().rstrip(';'))
+    self.evaluating_packages.add(line.split()[1].strip().rstrip(';'))
   
-  def code(self):
+  def evaluating_code(self):
     #this method returns the code import statement with all the packages
-    _code = self._skeleton % ('\n'.join(p for p in self.packages))
+    _code = self._skeleton % ('\n'.join(p for p in self.evaluating_packages))
     return _code
+
+  def correct_code(self):
+    _code = self._skeleton % ('\n'.join(p for p in self.correct_packages))
+    return _code
+
+  def commit(self):
+    self.correct_packages = self.evaluating_packages
   
+  def revert(self):
+    self.evaluating_packages = set()
+
   def __repr__(self):
-    return 'Import : {}'.format(', '.join(package for package in self.packages))
+    return 'Import : {}'.format(', '.join(package for package in self.evaluating_packages))
 
 
 
@@ -76,7 +87,7 @@ class StatementNode:
 
 def execute_go(import_node, statement_node):
   #create a temp fileclear
-  _import_code = import_node.code()
+  _import_code = import_node.evaluating_code()
   _statement_code = statement_node.code()
   _go_cover = ['package main\n',
     _import_code,
@@ -89,9 +100,29 @@ def execute_go(import_node, statement_node):
   _file = open('test.go', mode='w+')
   _file.write(''.join(line for line in _go_cover))
   _file.flush()
+  _file.close()
 
   
-  s = subprocess.Popen('go run test.go'.split(), stdout = sys.stdin, stderr=sys.stdin)
+  return_code = subprocess.call('go run test.go'.split(), stdout = sys.stdin, stderr=sys.stdin)
+  if return_code == 1:
+    import_node.revert()
+    _go_cover_back = ['package main\n',
+    import_node.correct_code(),
+    '\n',
+    'func main() {\n',
+    _statement_code,
+    '\n}'
+    ]
+    _file = open('test.go', mode='w+')
+    _file.write(''.join(line for line in _go_cover_back)) 
+    _file.flush()
+    _file.close()
+    
+  elif return_code == 0:
+    import_node.commit()
+  else:
+    pass
+
   
   
 
