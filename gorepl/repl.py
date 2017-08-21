@@ -8,7 +8,9 @@ import sys
 import random
 import argparse
 
+
 from gorepl.shell import InteractiveShell
+
 
 #i will start from the first no
 class rdict(dict):
@@ -105,8 +107,15 @@ def _run_repl():
     repl = Repl()
     shell.print(' Interactive Golang REPL | robusgauli@gmail.com | version: 0.01', title=True)
     is_multiline=True
+
+
+   
+
+    
+    
     while True:
-        user_input = shell.input(is_multiline)
+       
+        user_input = shell.input()
         if not user_input.strip():
             continue
         if user_input.strip() in 'exit quit exit() quit() \q':

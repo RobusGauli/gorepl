@@ -9,6 +9,23 @@ from prompt_toolkit.styles import style_from_dict
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.shortcuts import print_tokens
 
+
+from prompt_toolkit.key_binding.manager import KeyBindingManager
+from prompt_toolkit.filters import IsReturning
+from prompt_toolkit.filters import Condition
+from prompt_toolkit.shortcuts import Keys
+
+manager = KeyBindingManager.for_prompt()
+
+@manager.registry.add_binding(Keys.Enter)
+def _(event):
+  def print_hello():
+    
+    print(event.__dict__)
+  event.cli.run_in_terminal(print_hello)
+  
+
+
 class InteractiveShell:
   
   _style = style_from_pygments(NativeStyle)
@@ -48,13 +65,20 @@ class InteractiveShell:
       (Token, '\n'),
     ]
 
-  def input(self):
+  def continuation_tokens(self, width):
+    def get_continuation_tokens(cli, width):
+      return [(Token, '.' * width)]
+    return get_continuation_tokens
+
+  def input(self, multiline=False):
     result = prompt(get_prompt_tokens=self.render_prompt,
                     lexer=self._go_lexer,
                     style=InteractiveShell._style,
                     true_color=self.true_color,
-                    multiline=self.multiline,
-                    history=self._file_history)
+                    multiline=multiline,
+                    get_continuation_tokens=self.continuation_tokens(5),
+                    history=self._file_history,
+                    key_bindings_registry=manager.registry)
     return result
 
   def print(self, output, title=False):
