@@ -6,6 +6,7 @@ import subprocess
 import re
 import sys
 import random
+import argparse
 
 #i will start from the first no
 class rdict(dict):
@@ -94,3 +95,34 @@ class Repl:
             print('return code ', return_code, 'bad')
             self._current_state.import_node.imports.clear()
             self._current_state.main_statement_node.main_statements.clear()
+
+
+
+def _run_repl():
+    repl = Repl()
+    while True:
+        user_input = input('>>>')
+        if not user_input.strip():
+            continue
+        if user_input.strip() in 'exit quit exit() quit() \q':
+            sys.stdout.write('Thank you right there')
+            break
+        sys.stdout.write('got:  '+ user_input)
+        #sys.stdin.write('asdasd')
+        
+            
+
+def _main():
+    desc = 'A interactive REPL for Golang'
+    parser = argparse.ArgumentParser(description=desc)
+    parser.add_argument('-run', action='store_true', default=False,
+                        dest='run',
+                        help='Start the interactive REPL')
+    results = parser.parse_args()
+    if results.run:
+        _run_repl()
+    else:
+        print(results.run)
+
+if __name__ == '__main__':
+    _main()
