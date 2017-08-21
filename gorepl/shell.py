@@ -1,3 +1,4 @@
+import prompt_toolkit
 from pygments.token import Token
 from pygments.styles.native import NativeStyle
 from pygments.lexers.go import GoLexer
@@ -11,18 +12,31 @@ from prompt_toolkit.shortcuts import print_tokens
 
 
 from prompt_toolkit.key_binding.manager import KeyBindingManager
-from prompt_toolkit.filters import IsReturning
+from prompt_toolkit.filters import IsReturning, IsMultiline
 from prompt_toolkit.filters import Condition
 from prompt_toolkit.shortcuts import Keys
 
+
 manager = KeyBindingManager.for_prompt()
 
-@manager.registry.add_binding(Keys.Enter)
+@manager.registry.add_binding(Keys.Enter, filter=IsMultiline())
 def _(event):
-  def print_hello():
-    
-    print(event.__dict__)
-  event.cli.run_in_terminal(print_hello)
+	
+	b = event.cli.current_buffer
+	if b.document.char_before_cursor == '{':
+		b.document = b.document.insert_after('\n    ')
+		b.cursor_down()
+	else:
+		b.document = b.document.insert_after('\n')
+		b.cursor_down()
+
+@manager.registry.add_binding(Keys.Tab)
+def tab_event(event):
+	b = event.cli.current_buffer
+	b.document = b.document.insert_after('   ')
+	prompt_toolkit.buffer.indent(b, 10, 10)
+	
+	
   
 
 
@@ -70,7 +84,7 @@ class InteractiveShell:
       return [(Token, '.' * width)]
     return get_continuation_tokens
 
-  def input(self, multiline=False):
+  def input(self, multiline=True):
     result = prompt(get_prompt_tokens=self.render_prompt,
                     lexer=self._go_lexer,
                     style=InteractiveShell._style,
@@ -78,7 +92,8 @@ class InteractiveShell:
                     multiline=multiline,
                     get_continuation_tokens=self.continuation_tokens(5),
                     history=self._file_history,
-                    key_bindings_registry=manager.registry)
+                    key_bindings_registry=manager.registry
+										)
     return result
 
   def print(self, output, title=False):
